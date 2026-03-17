@@ -1,0 +1,15 @@
+pandas
+matplotlib
+seaborn
+scikit-learn
+xgboost
+shap
+statsmodels
+scipy
+geopandas
+folium
+plotly
+streamlit
+requests
+openpyxl
+jupyter
