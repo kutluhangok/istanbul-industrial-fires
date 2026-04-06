@@ -11,14 +11,8 @@ This project investigates the temporal and spatial patterns of fire incidents in
 
 ## Data Sources and Enrichment
 
-The fire incident dataset is enriched with three external sources:
-
-1. **Meteorological data** — Daily temperature, humidity, wind speed, and precipitation from the Open-Meteo archive API (2017–2024)
-2. **Demographic and building data** — District-level population, density, and building stock characteristics from TUIK and IBB Open Data Portal
-3. **Industrial zone geographies** — Organized Industrial Zone (OSB) locations and boundaries from the Istanbul OSB portal and OpenStreetMap
-
-The enriched dataset is expected to contain several thousand fire incident records spanning multiple years, with approximately 15–20 features after engineering (temporal, spatial, environmental, and structural variables).
-
+The IBB Open Data Portal currently provides verified aggregate records covering 2017–2019 (3 years). Combined with the 2020–2024 statistical reports, the guaranteed open-source baseline covers 8 years (2017–2024) of monthly district-level fire counts across Istanbul's 39 districts, yielding a panel dataset of approximately 39 districts × 96 months = 3,744 district-month observations.
+If the institutional request to Istanbul Itfaiyesi is successful, the dataset will be upgraded to incident-level records. Based on Istanbul Itfaiyesi's published statistics, the city records approximately 22,000–25,000 fire incidents per year across all categories. Filtering for structural and industrial fires is estimated to yield roughly 8,000–12,000 incident-level records per year, or 64,000–96,000 records over 8 years. This estimate will be confirmed and revised once the data request receives a response. The analysis is designed to be valid under either scenario; the aggregate panel dataset constitutes the minimum viable dataset, while incident-level records enable the full machine learning pipeline described in the methodology.
 ## Methodology
 
 The analysis proceeds in four stages:
