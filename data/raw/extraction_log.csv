@@ -1,0 +1,9 @@
+source_file,status,reason,rows
+kmo2017.pdf,ok,,153
+kmo2018.pdf,ok,,436
+kmo2019.pdf,ok,,541
+kmo2020.pdf,ok,,493
+kmo2021.pdf,ok,,394
+kmo2022.pdf,ok,,587
+kmo2023.pdf,ok,,528
+kmo2024.pdf,skipped,Appendix pages have no extractable text/table layer; OCR is required.,0

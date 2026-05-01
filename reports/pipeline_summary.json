@@ -1,0 +1,52 @@
+{
+  "raw_rows": 3132,
+  "clean_rows": 3132,
+  "rows_by_year": {
+    "2017": 153,
+    "2018": 436,
+    "2019": 541,
+    "2020": 493,
+    "2021": 394,
+    "2022": 587,
+    "2023": 528
+  },
+  "istanbul_rows": 826,
+  "figures": 13,
+  "best_model": {
+    "model": "Random Forest",
+    "cv_f1_macro_mean": 0.48085516548078633,
+    "cv_f1_macro_std": 0.037981740359995485,
+    "test_f1_macro": 0.47287066923870286,
+    "test_accuracy": 0.839622641509434
+  },
+  "hypothesis_results": {
+    "H1_seasonality_kruskal": {
+      "H": 14.809462733528115,
+      "p_value": 0.1913870583482299,
+      "epsilon_squared": 0.05442089619325878
+    },
+    "H2_osb_mannwhitney": {
+      "U": 585.0,
+      "p_value": 2.994772534874451e-06,
+      "osb_median": 57.0,
+      "non_osb_median": 2.0
+    },
+    "H3_weather_correlations": {
+      "fire_count": 1.0,
+      "temperature_2m_mean": 0.047806293893480525,
+      "relative_humidity_2m_mean": -0.056545530861343694,
+      "windspeed_10m_max": -0.06918724594740915,
+      "precipitation_sum": -0.035435375491577034
+    },
+    "H4_sector_severity_chi_square": {
+      "chi2": 83.40756465274296,
+      "p_value": 1.0286848772166159e-09,
+      "dof": 20
+    },
+    "H4_osb_severity_chi_square": {
+      "chi2": 0.983548925712913,
+      "p_value": 0.6115402753268263,
+      "dof": 2
+    }
+  }
+}

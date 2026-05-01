@@ -1,0 +1,30 @@
+{
+  "H1_seasonality_kruskal": {
+    "H": 14.809462733528115,
+    "p_value": 0.1913870583482299,
+    "epsilon_squared": 0.05442089619325878
+  },
+  "H2_osb_mannwhitney": {
+    "U": 585.0,
+    "p_value": 2.994772534874451e-06,
+    "osb_median": 57.0,
+    "non_osb_median": 2.0
+  },
+  "H3_weather_correlations": {
+    "fire_count": 1.0,
+    "temperature_2m_mean": 0.047806293893480525,
+    "relative_humidity_2m_mean": -0.056545530861343694,
+    "windspeed_10m_max": -0.06918724594740915,
+    "precipitation_sum": -0.035435375491577034
+  },
+  "H4_sector_severity_chi_square": {
+    "chi2": 83.40756465274296,
+    "p_value": 1.0286848772166159e-09,
+    "dof": 20
+  },
+  "H4_osb_severity_chi_square": {
+    "chi2": 0.983548925712913,
+    "p_value": 0.6115402753268263,
+    "dof": 2
+  }
+}
