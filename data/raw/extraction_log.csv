@@ -6,4 +6,4 @@ kmo2020.pdf,ok,,493
 kmo2021.pdf,ok,,394
 kmo2022.pdf,ok,,587
 kmo2023.pdf,ok,,528
-kmo2024.pdf,skipped,Appendix pages have no extractable text/table layer; OCR is required.,0
+kmo2024.pdf,skipped,Appendix pages are image-based and OCR tests were not reliable. Provide data/raw/kmo2024_manual.xlsx with canonical columns to include 2024.,0

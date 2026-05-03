@@ -25,6 +25,7 @@ CANONICAL_COLUMNS = [
 ]
 
 PDF_DIR = Path("/Users/kutluhangok/Desktop/DSA210 Analiz")
+MANUAL_2024_PATH = Path("data/raw/kmo2024_manual.xlsx")
 
 
 DATE_RE = re.compile(r"^\d{1,2}[./]\d{1,2}[./]\d{4}$")
@@ -235,14 +236,26 @@ def extract_all(pdf_dir: Path = PDF_DIR, output_path: Path | None = None) -> pd.
     for pdf_path in sorted(pdf_dir.glob("kmo*.pdf")):
         year = int(re.search(r"(\d{4})", pdf_path.stem).group(1))
         if year == 2024:
-            logs.append(
-                {
-                    "source_file": pdf_path.name,
-                    "status": "skipped",
-                    "reason": "Appendix pages have no extractable text/table layer; OCR is required.",
-                    "rows": 0,
-                }
-            )
+            if MANUAL_2024_PATH.exists():
+                manual = pd.read_excel(MANUAL_2024_PATH)
+                for col in CANONICAL_COLUMNS:
+                    if col not in manual.columns:
+                        manual[col] = ""
+                manual = manual[CANONICAL_COLUMNS].copy()
+                manual.insert(0, "source_file", pdf_path.name)
+                manual.insert(1, "source_year", year)
+                manual.insert(2, "extraction_method", "manual_2024_excel")
+                frames.append(manual)
+                logs.append({"source_file": pdf_path.name, "status": "ok_manual", "reason": f"Loaded {MANUAL_2024_PATH}", "rows": len(manual)})
+            else:
+                logs.append(
+                    {
+                        "source_file": pdf_path.name,
+                        "status": "skipped",
+                        "reason": "Appendix pages are image-based and OCR tests were not reliable. Provide data/raw/kmo2024_manual.xlsx with canonical columns to include 2024.",
+                        "rows": 0,
+                    }
+                )
             continue
         df_year = extract_pdf(pdf_path)
         frames.append(df_year)

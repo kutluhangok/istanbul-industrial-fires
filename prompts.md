@@ -6,3 +6,5 @@
 | 2026-05-01 | PDF parsing and pipeline implementation | OpenAI Codex | Implement KMO Ek-1 extraction, cleaning, weather enrichment, EDA figures, hypothesis tests, ML models, notebooks, and documentation. | Evet, PDF yapısına göre 2022-2023 coordinate extraction eklendi; 2024 OCR limitation loglandı. |
 | 2026-05-01 | Debugging and validation | OpenAI Codex | Validate 2021 parsing against known row counts and fix pipeline errors. | Evet, sklearn boolean preprocessing ve weather fallback düzeltildi. |
 | 2026-05-01 | Documentation | OpenAI Codex | Create README, requirements, prompts log, final report summary. | Kısmen, elde edilen sonuçlara göre özetlendi. |
+| 2026-05-03 | OSB exposure redesign | OpenAI Codex | "OSBÜK OSB area/parsel exposure yap; araştırmayı tüm Türkiye geneline çevir." | Evet, OSBÜK verisi eklendi, Türkiye geneli il-yıl panel kuruldu. |
+| 2026-05-03 | 2024 OCR feasibility | OpenAI Codex | "2024 verilerini temizle." | Kısmen; OCR güvenilir olmadığı için otomatik temizleme yapılmadı, manuel Excel import desteği eklendi. |

@@ -4,27 +4,26 @@
     "p_value": 0.1913870583482299,
     "epsilon_squared": 0.05442089619325878
   },
-  "H2_osb_mannwhitney": {
-    "U": 585.0,
-    "p_value": 2.994772534874451e-06,
-    "osb_median": 57.0,
-    "non_osb_median": 2.0
+  "H2_osb_exposure_mannwhitney": {
+    "U": 11258.0,
+    "p_value": 1.0282303547553038e-28,
+    "osb_province_median": 9.0,
+    "non_osb_province_median": 1.0
   },
-  "H3_weather_correlations": {
-    "fire_count": 1.0,
-    "temperature_2m_mean": 0.047806293893480525,
-    "relative_humidity_2m_mean": -0.056545530861343694,
-    "windspeed_10m_max": -0.06918724594740915,
-    "precipitation_sum": -0.035435375491577034
+  "H3_osb_exposure_correlations": {
+    "osb_parcels_spearman": 0.7707710979729129,
+    "osb_parcels_p_value": 3.809145024998873e-15,
+    "osb_area_spearman": 0.7374119355994901,
+    "osb_area_p_value": 2.2380643209360956e-13
   },
   "H4_sector_severity_chi_square": {
     "chi2": 83.40756465274296,
     "p_value": 1.0286848772166159e-09,
     "dof": 20
   },
-  "H4_osb_severity_chi_square": {
-    "chi2": 0.983548925712913,
-    "p_value": 0.6115402753268263,
+  "H4_province_osb_exposure_severity_chi_square": {
+    "chi2": 9.417115597683324,
+    "p_value": 0.009017773652317448,
     "dof": 2
   }
 }

@@ -11,13 +11,17 @@
     "2023": 528
   },
   "istanbul_rows": 826,
+  "osb_cities": 81,
+  "osb_total_area_hectare": 141637.53000000003,
+  "osb_total_parcels": 63860,
+  "city_year_panel_rows": 506,
   "figures": 13,
   "best_model": {
     "model": "Random Forest",
-    "cv_f1_macro_mean": 0.48085516548078633,
-    "cv_f1_macro_std": 0.037981740359995485,
-    "test_f1_macro": 0.47287066923870286,
-    "test_accuracy": 0.839622641509434
+    "cv_f1_macro_mean": 0.5247158344991233,
+    "cv_f1_macro_std": 0.019074096681874302,
+    "test_f1_macro": 0.4667734553775744,
+    "test_accuracy": 0.8773584905660378
   },
   "hypothesis_results": {
     "H1_seasonality_kruskal": {
@@ -25,27 +29,26 @@
       "p_value": 0.1913870583482299,
       "epsilon_squared": 0.05442089619325878
     },
-    "H2_osb_mannwhitney": {
-      "U": 585.0,
-      "p_value": 2.994772534874451e-06,
-      "osb_median": 57.0,
-      "non_osb_median": 2.0
+    "H2_osb_exposure_mannwhitney": {
+      "U": 11258.0,
+      "p_value": 1.0282303547553038e-28,
+      "osb_province_median": 9.0,
+      "non_osb_province_median": 1.0
     },
-    "H3_weather_correlations": {
-      "fire_count": 1.0,
-      "temperature_2m_mean": 0.047806293893480525,
-      "relative_humidity_2m_mean": -0.056545530861343694,
-      "windspeed_10m_max": -0.06918724594740915,
-      "precipitation_sum": -0.035435375491577034
+    "H3_osb_exposure_correlations": {
+      "osb_parcels_spearman": 0.7707710979729129,
+      "osb_parcels_p_value": 3.809145024998873e-15,
+      "osb_area_spearman": 0.7374119355994901,
+      "osb_area_p_value": 2.2380643209360956e-13
     },
     "H4_sector_severity_chi_square": {
       "chi2": 83.40756465274296,
       "p_value": 1.0286848772166159e-09,
       "dof": 20
     },
-    "H4_osb_severity_chi_square": {
-      "chi2": 0.983548925712913,
-      "p_value": 0.6115402753268263,
+    "H4_province_osb_exposure_severity_chi_square": {
+      "chi2": 9.417115597683324,
+      "p_value": 0.009017773652317448,
       "dof": 2
     }
   }

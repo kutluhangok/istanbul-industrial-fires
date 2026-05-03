@@ -90,36 +90,55 @@ def build_figures(clean: pd.DataFrame, istanbul: pd.DataFrame) -> None:
     plt.ylabel("Incident count")
     _save("06_severity_distribution.png")
 
-    istanbul_district = istanbul["ilce"].replace("", np.nan).dropna().value_counts().head(15).sort_values()
-    osb_names = {"Tuzla", "Esenyurt", "Arnavutköy", "Başakşehir", "Ümraniye", "Silivri", "Avcılar"}
-    colors = ["#e15759" if district in osb_names else "#76b7b2" for district in istanbul_district.index]
+    city_year_path = Path("data/processed/city_year_osb_panel.xlsx")
+    if city_year_path.exists():
+        panel = pd.read_excel(city_year_path)
+    else:
+        panel = clean.groupby(["il", "year"]).size().reset_index(name="incident_count")
+
+    latest_rates = (
+        panel.dropna(subset=["incidents_per_1000_parcels"])
+        .groupby("il")
+        .agg(incident_count=("incident_count", "sum"), osb_parcels=("osb_parcels", "first"))
+        .query("osb_parcels >= 100")
+    )
+    latest_rates["incidents_per_1000_parcels"] = latest_rates["incident_count"] / latest_rates["osb_parcels"] * 1000
+    top_rates = latest_rates.sort_values("incidents_per_1000_parcels", ascending=False).head(15).sort_values("incidents_per_1000_parcels")
     plt.figure(figsize=(9, 6))
-    plt.barh(istanbul_district.index, istanbul_district.values, color=colors)
-    plt.title("Top Istanbul Districts")
-    plt.xlabel("Incident count")
+    plt.barh(top_rates.index, top_rates["incidents_per_1000_parcels"], color="#e15759")
+    plt.title("Exposure-Adjusted Incidents by Province")
+    plt.xlabel("Incidents per 1,000 OSB parcels, 2017-2023")
     _save("07_istanbul_districts.png")
 
-    osb_comp = pd.crosstab(istanbul["has_osb"], istanbul["severity"], normalize="index")
+    osb_comp = pd.crosstab(clean["has_city_osb_exposure"], clean["severity"], normalize="index")
     osb_comp = osb_comp.reindex(columns=["low", "medium", "high"], fill_value=0)
     osb_comp.plot(kind="bar", stacked=True, figsize=(8, 5), color=["#59a14f", "#f28e2b", "#e15759"])
-    plt.title("Istanbul Severity Mix: OSB vs Non-OSB")
-    plt.xlabel("Has OSB")
+    plt.title("Severity Mix: Provinces With vs Without OSB Exposure")
+    plt.xlabel("Province has OSB exposure")
     plt.ylabel("Share")
     _save("08_osb_vs_non_osb_severity.png")
 
-    daily = istanbul.groupby("date").agg(
-        fire_count=("olay_turu", "count"),
-        temperature_2m_mean=("temperature_2m_mean", "first"),
-        relative_humidity_2m_mean=("relative_humidity_2m_mean", "first"),
-    ).dropna().reset_index()
+    province_totals = clean.groupby("il").agg(
+        incident_count=("Tarih", "count"),
+        osb_parcels=("osb_parcels", "first"),
+        osb_area_hectare=("osb_area_hectare", "first"),
+    ).query("osb_parcels > 0")
     plt.figure(figsize=(8, 5))
-    sns.regplot(data=daily, x="temperature_2m_mean", y="fire_count", lowess=True, scatter_kws={"alpha": 0.55})
-    plt.title("Temperature vs Daily Istanbul Incidents")
+    sns.regplot(data=province_totals, x="osb_parcels", y="incident_count", scatter_kws={"alpha": 0.65}, color="#4e79a7")
+    plt.xscale("log")
+    plt.yscale("log")
+    plt.title("OSB Parcels vs Province Incident Count")
+    plt.xlabel("OSB parcels (log)")
+    plt.ylabel("Incidents, 2017-2023 (log)")
     _save("09_temp_vs_fire_count.png")
 
     plt.figure(figsize=(8, 5))
-    sns.regplot(data=daily, x="relative_humidity_2m_mean", y="fire_count", lowess=True, scatter_kws={"alpha": 0.55}, color="#8e6c8a")
-    plt.title("Humidity vs Daily Istanbul Incidents")
+    sns.regplot(data=province_totals, x="osb_area_hectare", y="incident_count", scatter_kws={"alpha": 0.65}, color="#8e6c8a")
+    plt.xscale("log")
+    plt.yscale("log")
+    plt.title("OSB Area vs Province Incident Count")
+    plt.xlabel("OSB area, hectare (log)")
+    plt.ylabel("Incidents, 2017-2023 (log)")
     _save("10_humidity_vs_fire_count.png")
 
     ignition = clean["Tutuşturma Kaynağı"].replace({"": np.nan, "-": np.nan, "Bilinmeyen": np.nan}).dropna().value_counts().head(15).sort_values()
@@ -153,41 +172,43 @@ def hypothesis_tests(clean: pd.DataFrame, istanbul: pd.DataFrame) -> dict:
     k = len(groups)
     epsilon_sq = (h_stat - k + 1) / (n - k) if n > k else np.nan
 
-    district_counts = istanbul.groupby("ilce").size().reset_index(name="fire_count")
-    osb_ilceler = {"Tuzla", "Esenyurt", "Arnavutköy", "Başakşehir", "Ümraniye", "Silivri", "Avcılar"}
-    district_counts["is_osb_district"] = district_counts["ilce"].isin(osb_ilceler)
-    osb_counts = district_counts[district_counts["is_osb_district"]]["fire_count"]
-    non_osb_counts = district_counts[~district_counts["is_osb_district"]]["fire_count"]
+    province_counts = clean.groupby("il").agg(
+        fire_count=("Tarih", "count"),
+        osb_parcels=("osb_parcels", "first"),
+        osb_area_hectare=("osb_area_hectare", "first"),
+        has_city_osb_exposure=("has_city_osb_exposure", "first"),
+    ).reset_index()
+    osb_counts = province_counts[province_counts["has_city_osb_exposure"]]["fire_count"]
+    non_osb_counts = province_counts[~province_counts["has_city_osb_exposure"]]["fire_count"]
     if len(osb_counts) and len(non_osb_counts):
         u_stat, u_p = stats.mannwhitneyu(osb_counts, non_osb_counts, alternative="greater")
     else:
         u_stat, u_p = np.nan, np.nan
 
-    weather_daily = istanbul.groupby("date").agg(
-        fire_count=("olay_turu", "count"),
-        temperature_2m_mean=("temperature_2m_mean", "first"),
-        relative_humidity_2m_mean=("relative_humidity_2m_mean", "first"),
-        windspeed_10m_max=("windspeed_10m_max", "first"),
-        precipitation_sum=("precipitation_sum", "first"),
-    ).dropna().reset_index()
-    weather_corr = weather_daily[["fire_count", "temperature_2m_mean", "relative_humidity_2m_mean", "windspeed_10m_max", "precipitation_sum"]].corr(numeric_only=True)["fire_count"].to_dict()
+    exposure_subset = province_counts.query("osb_parcels > 0 and osb_area_hectare > 0").copy()
+    exposure_corr = {
+        "osb_parcels_spearman": stats.spearmanr(exposure_subset["fire_count"], exposure_subset["osb_parcels"]).statistic if len(exposure_subset) else np.nan,
+        "osb_parcels_p_value": stats.spearmanr(exposure_subset["fire_count"], exposure_subset["osb_parcels"]).pvalue if len(exposure_subset) else np.nan,
+        "osb_area_spearman": stats.spearmanr(exposure_subset["fire_count"], exposure_subset["osb_area_hectare"]).statistic if len(exposure_subset) else np.nan,
+        "osb_area_p_value": stats.spearmanr(exposure_subset["fire_count"], exposure_subset["osb_area_hectare"]).pvalue if len(exposure_subset) else np.nan,
+    }
 
     ct_sector = pd.crosstab(clean["sektor_std"], clean["severity"])
     chi2_sector, p_sector, dof_sector, _ = chi2_contingency(ct_sector)
-    ct_osb = pd.crosstab(istanbul["has_osb"], istanbul["severity"])
+    ct_osb = pd.crosstab(clean["has_city_osb_exposure"], clean["severity"])
     chi2_osb, p_osb, dof_osb, _ = chi2_contingency(ct_osb)
 
     results = {
         "H1_seasonality_kruskal": {"H": float(h_stat), "p_value": float(h_p), "epsilon_squared": float(epsilon_sq)},
-        "H2_osb_mannwhitney": {
+        "H2_osb_exposure_mannwhitney": {
             "U": float(u_stat) if pd.notna(u_stat) else None,
             "p_value": float(u_p) if pd.notna(u_p) else None,
-            "osb_median": float(osb_counts.median()) if len(osb_counts) else None,
-            "non_osb_median": float(non_osb_counts.median()) if len(non_osb_counts) else None,
+            "osb_province_median": float(osb_counts.median()) if len(osb_counts) else None,
+            "non_osb_province_median": float(non_osb_counts.median()) if len(non_osb_counts) else None,
         },
-        "H3_weather_correlations": {k: (float(v) if pd.notna(v) else None) for k, v in weather_corr.items()},
+        "H3_osb_exposure_correlations": {k: (float(v) if pd.notna(v) else None) for k, v in exposure_corr.items()},
         "H4_sector_severity_chi_square": {"chi2": float(chi2_sector), "p_value": float(p_sector), "dof": int(dof_sector)},
-        "H4_osb_severity_chi_square": {"chi2": float(chi2_osb), "p_value": float(p_osb), "dof": int(dof_osb)},
+        "H4_province_osb_exposure_severity_chi_square": {"chi2": float(chi2_osb), "p_value": float(p_osb), "dof": int(dof_osb)},
     }
     (REPORTS / "hypothesis_results.json").write_text(json.dumps(results, indent=2, ensure_ascii=False), encoding="utf-8")
     return results
@@ -233,6 +254,12 @@ def run_ml(clean: pd.DataFrame, istanbul: pd.DataFrame) -> pd.DataFrame:
         "is_holiday",
         "is_istanbul",
         "has_osb",
+        "osb_count",
+        "osb_area_hectare",
+        "osb_parcels",
+        "osb_operational_count",
+        "osb_operational_area_hectare",
+        "osb_operational_parcels",
         "temperature_2m_mean",
         "relative_humidity_2m_mean",
         "windspeed_10m_max",
@@ -252,6 +279,12 @@ def run_ml(clean: pd.DataFrame, istanbul: pd.DataFrame) -> pd.DataFrame:
         "month_cos",
         "dow_sin",
         "dow_cos",
+        "osb_count",
+        "osb_area_hectare",
+        "osb_parcels",
+        "osb_operational_count",
+        "osb_operational_area_hectare",
+        "osb_operational_parcels",
         "temperature_2m_mean",
         "relative_humidity_2m_mean",
         "windspeed_10m_max",

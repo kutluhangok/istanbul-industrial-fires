@@ -15,3 +15,4 @@ matplotlib>=3.7
 seaborn>=0.12
 scikit-posthocs>=0.8
 nbformat>=5.9
+ocrmac>=1.0

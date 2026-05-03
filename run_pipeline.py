@@ -8,6 +8,7 @@ import pandas as pd
 from src.analysis import build_figures, hypothesis_tests, run_ml
 from src.data_cleaner import clean_incidents
 from src.feature_engineer import build_enrichment
+from src.osb_exposure import add_exposure_to_incidents, build_osb_outputs
 from src.pdf_extractor import extract_all
 
 
@@ -20,6 +21,8 @@ def main() -> None:
 
     raw = extract_all(output_path=Path("data/raw/kmo_incidents_raw.xlsx"))
     clean = clean_incidents(raw)
+    _, osb_city, osb_panel = build_osb_outputs(clean)
+    clean = add_exposure_to_incidents(clean, osb_city)
     clean.to_excel("data/processed/kmo_incidents_clean.xlsx", index=False)
     istanbul = build_enrichment()
     build_figures(clean, istanbul)
@@ -31,6 +34,10 @@ def main() -> None:
         "clean_rows": int(len(clean)),
         "rows_by_year": {str(k): int(v) for k, v in clean.groupby("year").size().items()},
         "istanbul_rows": int(clean["is_istanbul"].sum()),
+        "osb_cities": int((osb_city["osb_count"] > 0).sum()),
+        "osb_total_area_hectare": float(osb_city["osb_area_hectare"].sum()),
+        "osb_total_parcels": int(osb_city["osb_parcels"].sum()),
+        "city_year_panel_rows": int(len(osb_panel)),
         "figures": len(list(Path("figures").glob("*.png"))),
         "best_model": model_comparison.iloc[0].to_dict() if not model_comparison.empty else {},
         "hypothesis_results": hypotheses,
