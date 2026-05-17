@@ -7,15 +7,18 @@ OCR attempts:
 - macOS Vision through `ocrmac`: returned no usable text for the table.
 - EasyOCR with Turkish and English recognition: returned hundreds of low-confidence fragments that did not preserve dates, city names, or table cells reliably.
 
-Decision: 2024 is not included in `data/processed/kmo_incidents_clean.xlsx` because adding noisy OCR rows would contaminate the analysis.
+Updated decision: a manually provided Excel file, `/Users/kutluhangok/Downloads/2024- YANGIN VE PATLAMA VERİLERİ - taslak.xlsx`, is now converted into `data/raw/kmo2024_manual.xlsx` and included in the pipeline.
 
-Low-friction way to include 2024:
+Validation:
 
-1. Open the 2024 PDF in Adobe Acrobat, Microsoft Word, Google Drive OCR, or another table OCR tool.
-2. Export the appendix table to Excel.
-3. Save it as `data/raw/kmo2024_manual.xlsx`.
-4. Use these canonical columns:
-   `Tarih`, `Olay Türü`, `Kayıp`, `Firma İsmi`, `Tutuşturma Kaynağı`, `Oluş Biçimleri`, `İl/İlçe`, `Yer`, `Tesis Türü`, `Sektör`, `Bölüm`, `Ekipman/Malzeme`, `Diğer`.
-5. Run `python3 run_pipeline.py`.
+- 2024 rows: 720
+- 2024 fires: 694
+- 2024 explosions: 26
+- Date range: 2024-01-02 to 2024-12-31
 
-The extractor will automatically load `data/raw/kmo2024_manual.xlsx` if it exists.
+Column mapping:
+
+- `İl` + `İlçe` -> `İl/İlçe`
+- `Mahalle / OSB` -> `Yer`
+- `Ek Bilgi` -> `Diğer`
+- `Kaynak` is retained as a source/reference field.

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from datetime import datetime
+from datetime import date, datetime
 
 import numpy as np
 import pandas as pd
@@ -121,10 +121,20 @@ def repair_hyphenated_words(text: object) -> str:
 
 
 def parse_turkish_date(date_str: object) -> pd.Timestamp | pd.NaT:
+    if isinstance(date_str, (pd.Timestamp, datetime, date)):
+        return pd.Timestamp(date_str)
     value = _clean_text(date_str)
     if not value or value == "-":
         return pd.NaT
     match = re.search(r"(\d{1,2})[./](\d{1,2})[./](\d{4})", value)
+    if not match:
+        iso = re.search(r"(\d{4})-(\d{1,2})-(\d{1,2})", value)
+        if iso:
+            year, month, day = map(int, iso.groups())
+            try:
+                return pd.Timestamp(datetime(year, month, day))
+            except ValueError:
+                return pd.NaT
     if not match:
         return pd.NaT
     day, month, year = map(int, match.groups())
@@ -286,6 +296,7 @@ def clean_incidents(raw_df: pd.DataFrame) -> pd.DataFrame:
         "Bölüm",
         "Ekipman/Malzeme",
         "Diğer",
+        "Kaynak",
         "is_weekend",
         "is_holiday",
         "month_sin",

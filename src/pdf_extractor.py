@@ -23,6 +23,7 @@ CANONICAL_COLUMNS = [
     "Ekipman/Malzeme",
     "Diğer",
 ]
+OPTIONAL_COLUMNS = ["Kaynak"]
 
 PDF_DIR = Path("/Users/kutluhangok/Desktop/DSA210 Analiz")
 MANUAL_2024_PATH = Path("data/raw/kmo2024_manual.xlsx")
@@ -224,6 +225,7 @@ def extract_pdf(pdf_path: Path) -> pd.DataFrame:
         method = "pdfplumber_tables"
 
     df = pd.DataFrame(rows, columns=CANONICAL_COLUMNS)
+    df["Kaynak"] = ""
     df.insert(0, "source_file", pdf_path.name)
     df.insert(1, "source_year", year)
     df.insert(2, "extraction_method", method)
@@ -238,10 +240,19 @@ def extract_all(pdf_dir: Path = PDF_DIR, output_path: Path | None = None) -> pd.
         if year == 2024:
             if MANUAL_2024_PATH.exists():
                 manual = pd.read_excel(MANUAL_2024_PATH)
+                if "İl/İlçe" not in manual.columns and {"İl", "İlçe"}.issubset(manual.columns):
+                    manual["İl/İlçe"] = manual["İl"].astype(str).str.strip() + "/" + manual["İlçe"].astype(str).str.strip()
+                if "Yer" not in manual.columns and "Mahalle / OSB" in manual.columns:
+                    manual["Yer"] = manual["Mahalle / OSB"]
+                if "Diğer" not in manual.columns and "Ek Bilgi" in manual.columns:
+                    manual["Diğer"] = manual["Ek Bilgi"]
                 for col in CANONICAL_COLUMNS:
                     if col not in manual.columns:
                         manual[col] = ""
-                manual = manual[CANONICAL_COLUMNS].copy()
+                for col in OPTIONAL_COLUMNS:
+                    if col not in manual.columns:
+                        manual[col] = ""
+                manual = manual[CANONICAL_COLUMNS + OPTIONAL_COLUMNS].copy()
                 manual.insert(0, "source_file", pdf_path.name)
                 manual.insert(1, "source_year", year)
                 manual.insert(2, "extraction_method", "manual_2024_excel")
@@ -268,7 +279,10 @@ def extract_all(pdf_dir: Path = PDF_DIR, output_path: Path | None = None) -> pd.
             }
         )
 
-    df = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame(columns=["source_file", "source_year", "extraction_method", *CANONICAL_COLUMNS])
+    df = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame(columns=["source_file", "source_year", "extraction_method", *CANONICAL_COLUMNS, *OPTIONAL_COLUMNS])
+    for col in OPTIONAL_COLUMNS:
+        if col not in df.columns:
+            df[col] = ""
     if output_path:
         output_path.parent.mkdir(parents=True, exist_ok=True)
         df.to_excel(output_path, index=False)

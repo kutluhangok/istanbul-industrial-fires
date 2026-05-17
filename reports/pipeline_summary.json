@@ -1,6 +1,6 @@
 {
-  "raw_rows": 3132,
-  "clean_rows": 3132,
+  "raw_rows": 3852,
+  "clean_rows": 3852,
   "rows_by_year": {
     "2017": 153,
     "2018": 436,
@@ -8,47 +8,48 @@
     "2020": 493,
     "2021": 394,
     "2022": 587,
-    "2023": 528
+    "2023": 528,
+    "2024": 720
   },
-  "istanbul_rows": 826,
+  "istanbul_rows": 1048,
   "osb_cities": 81,
   "osb_total_area_hectare": 141637.53000000003,
   "osb_total_parcels": 63860,
-  "city_year_panel_rows": 506,
+  "city_year_panel_rows": 566,
   "figures": 13,
   "best_model": {
     "model": "Random Forest",
-    "cv_f1_macro_mean": 0.5247158344991233,
-    "cv_f1_macro_std": 0.019074096681874302,
-    "test_f1_macro": 0.4667734553775744,
-    "test_accuracy": 0.8773584905660378
+    "cv_f1_macro_mean": 0.5057073391834982,
+    "cv_f1_macro_std": 0.013864852724594664,
+    "test_f1_macro": 0.5087669934038649,
+    "test_accuracy": 0.8979591836734694
   },
   "hypothesis_results": {
     "H1_seasonality_kruskal": {
-      "H": 14.809462733528115,
-      "p_value": 0.1913870583482299,
-      "epsilon_squared": 0.05442089619325878
+      "H": 11.810444267496177,
+      "p_value": 0.3780589571696683,
+      "epsilon_squared": 0.009883466676782643
     },
     "H2_osb_exposure_mannwhitney": {
-      "U": 11258.0,
-      "p_value": 1.0282303547553038e-28,
-      "osb_province_median": 9.0,
+      "U": 12171.5,
+      "p_value": 9.913055982834709e-31,
+      "osb_province_median": 10.0,
       "non_osb_province_median": 1.0
     },
     "H3_osb_exposure_correlations": {
-      "osb_parcels_spearman": 0.7707710979729129,
-      "osb_parcels_p_value": 3.809145024998873e-15,
-      "osb_area_spearman": 0.7374119355994901,
-      "osb_area_p_value": 2.2380643209360956e-13
+      "osb_parcels_spearman": 0.7947635916056632,
+      "osb_parcels_p_value": 7.821841143164724e-17,
+      "osb_area_spearman": 0.7493686668718624,
+      "osb_area_p_value": 3.6782180553461e-14
     },
     "H4_sector_severity_chi_square": {
-      "chi2": 83.40756465274296,
-      "p_value": 1.0286848772166159e-09,
+      "chi2": 90.32395452962544,
+      "p_value": 6.506124205918993e-11,
       "dof": 20
     },
     "H4_province_osb_exposure_severity_chi_square": {
-      "chi2": 9.417115597683324,
-      "p_value": 0.009017773652317448,
+      "chi2": 4.508137026316152,
+      "p_value": 0.10497127757416845,
       "dof": 2
     }
   }
