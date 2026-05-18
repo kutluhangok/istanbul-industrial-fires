@@ -25,6 +25,7 @@ from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler
 
 FIGURES = Path("figures")
 REPORTS = Path("reports")
+WEATHER_PATH = Path("data/enrichment/weather_daily_by_province.xlsx")
 sns.set_theme(style="whitegrid", font="DejaVu Sans")
 
 
@@ -32,6 +33,24 @@ def _save(path: str) -> None:
     plt.tight_layout()
     plt.savefig(FIGURES / path, dpi=180, bbox_inches="tight")
     plt.close()
+
+
+def build_province_day_weather_panel(clean: pd.DataFrame) -> pd.DataFrame:
+    if not WEATHER_PATH.exists():
+        return pd.DataFrame()
+
+    weather = pd.read_excel(WEATHER_PATH)
+    if weather.empty:
+        return pd.DataFrame()
+
+    weather = weather.copy()
+    weather["date"] = pd.to_datetime(weather["date"]).dt.normalize()
+    incidents = clean.copy()
+    incidents["date"] = pd.to_datetime(incidents["tarih_parsed"]).dt.normalize()
+    event_counts = incidents.groupby(["il", "date"]).size().reset_index(name="incident_count")
+    panel = weather.merge(event_counts, on=["il", "date"], how="left")
+    panel["incident_count"] = panel["incident_count"].fillna(0)
+    return panel
 
 
 def build_figures(clean: pd.DataFrame, istanbul: pd.DataFrame) -> None:
@@ -118,6 +137,45 @@ def build_figures(clean: pd.DataFrame, istanbul: pd.DataFrame) -> None:
     plt.ylabel("Share")
     _save("08_osb_vs_non_osb_severity.png")
 
+    province_day_weather = build_province_day_weather_panel(clean)
+    if not province_day_weather.empty and province_day_weather["temperature_2m_mean"].notna().any():
+        temp_panel = province_day_weather.dropna(subset=["temperature_2m_mean"]).copy()
+        temp_panel["temp_decile"] = pd.qcut(temp_panel["temperature_2m_mean"], q=10, duplicates="drop")
+        temp_summary = temp_panel.groupby("temp_decile", observed=True).agg(
+            mean_temp=("temperature_2m_mean", "mean"),
+            mean_incidents=("incident_count", "mean"),
+        )
+        plt.figure(figsize=(8, 5))
+        sns.regplot(data=temp_summary, x="mean_temp", y="mean_incidents", color="#d95f02", marker="o")
+        plt.title("Temperature vs Daily Incident Frequency")
+        plt.xlabel("Mean daily temperature by province-day decile (C)")
+        plt.ylabel("Mean incidents per province-day")
+        _save("09_temp_vs_fire_count.png")
+    else:
+        plt.figure(figsize=(8, 5))
+        plt.text(0.5, 0.5, "Weather data unavailable", ha="center", va="center")
+        plt.axis("off")
+        _save("09_temp_vs_fire_count.png")
+
+    if not province_day_weather.empty and province_day_weather["relative_humidity_2m_mean"].notna().any():
+        humidity_panel = province_day_weather.dropna(subset=["relative_humidity_2m_mean"]).copy()
+        humidity_panel["humidity_decile"] = pd.qcut(humidity_panel["relative_humidity_2m_mean"], q=10, duplicates="drop")
+        humidity_summary = humidity_panel.groupby("humidity_decile", observed=True).agg(
+            mean_humidity=("relative_humidity_2m_mean", "mean"),
+            mean_incidents=("incident_count", "mean"),
+        )
+        plt.figure(figsize=(8, 5))
+        sns.regplot(data=humidity_summary, x="mean_humidity", y="mean_incidents", color="#4e79a7", marker="o")
+        plt.title("Humidity vs Daily Incident Frequency")
+        plt.xlabel("Mean daily relative humidity by province-day decile (%)")
+        plt.ylabel("Mean incidents per province-day")
+        _save("10_humidity_vs_fire_count.png")
+    else:
+        plt.figure(figsize=(8, 5))
+        plt.text(0.5, 0.5, "Weather data unavailable", ha="center", va="center")
+        plt.axis("off")
+        _save("10_humidity_vs_fire_count.png")
+
     province_totals = clean.groupby("il").agg(
         incident_count=("Tarih", "count"),
         osb_parcels=("osb_parcels", "first"),
@@ -129,8 +187,8 @@ def build_figures(clean: pd.DataFrame, istanbul: pd.DataFrame) -> None:
     plt.yscale("log")
     plt.title("OSB Parcels vs Province Incident Count")
     plt.xlabel("OSB parcels (log)")
-    plt.ylabel("Incidents, 2017-2023 (log)")
-    _save("09_temp_vs_fire_count.png")
+    plt.ylabel("Incidents, 2017-2024 (log)")
+    _save("13_osb_parcels_vs_incidents.png")
 
     plt.figure(figsize=(8, 5))
     sns.regplot(data=province_totals, x="osb_area_hectare", y="incident_count", scatter_kws={"alpha": 0.65}, color="#8e6c8a")
@@ -138,8 +196,8 @@ def build_figures(clean: pd.DataFrame, istanbul: pd.DataFrame) -> None:
     plt.yscale("log")
     plt.title("OSB Area vs Province Incident Count")
     plt.xlabel("OSB area, hectare (log)")
-    plt.ylabel("Incidents, 2017-2023 (log)")
-    _save("10_humidity_vs_fire_count.png")
+    plt.ylabel("Incidents, 2017-2024 (log)")
+    _save("15_osb_area_vs_incidents.png")
 
     ignition = clean["Tutuşturma Kaynağı"].replace({"": np.nan, "-": np.nan, "Bilinmeyen": np.nan}).dropna().value_counts().head(15).sort_values()
     plt.figure(figsize=(9, 6))
@@ -193,6 +251,27 @@ def hypothesis_tests(clean: pd.DataFrame, istanbul: pd.DataFrame) -> dict:
         "osb_area_p_value": stats.spearmanr(exposure_subset["fire_count"], exposure_subset["osb_area_hectare"]).pvalue if len(exposure_subset) else np.nan,
     }
 
+    weather_panel = build_province_day_weather_panel(clean)
+    weather_results = {}
+    if not weather_panel.empty:
+        for col in ["temperature_2m_mean", "relative_humidity_2m_mean", "windspeed_10m_max", "precipitation_sum"]:
+            subset = weather_panel[["incident_count", col]].dropna()
+            if len(subset) > 2:
+                corr = stats.spearmanr(subset["incident_count"], subset[col])
+                weather_results[f"{col}_spearman"] = float(corr.statistic)
+                weather_results[f"{col}_p_value"] = float(corr.pvalue)
+
+        for col in ["extreme_heat", "low_humidity", "high_wind", "has_precipitation"]:
+            if col in weather_panel.columns:
+                high_group = weather_panel.loc[weather_panel[col].fillna(False).astype(bool), "incident_count"]
+                low_group = weather_panel.loc[~weather_panel[col].fillna(False).astype(bool), "incident_count"]
+                if len(high_group) and len(low_group):
+                    stat, p_value = stats.mannwhitneyu(high_group, low_group, alternative="greater")
+                    weather_results[f"{col}_mean_incidents"] = float(high_group.mean())
+                    weather_results[f"not_{col}_mean_incidents"] = float(low_group.mean())
+                    weather_results[f"{col}_mannwhitney_U"] = float(stat)
+                    weather_results[f"{col}_mannwhitney_p_value"] = float(p_value)
+
     ct_sector = pd.crosstab(clean["sektor_std"], clean["severity"])
     chi2_sector, p_sector, dof_sector, _ = chi2_contingency(ct_sector)
     ct_osb = pd.crosstab(clean["has_city_osb_exposure"], clean["severity"])
@@ -207,6 +286,7 @@ def hypothesis_tests(clean: pd.DataFrame, istanbul: pd.DataFrame) -> dict:
             "non_osb_province_median": float(non_osb_counts.median()) if len(non_osb_counts) else None,
         },
         "H3_osb_exposure_correlations": {k: (float(v) if pd.notna(v) else None) for k, v in exposure_corr.items()},
+        "H3b_national_weather_incident_frequency": weather_results,
         "H4_sector_severity_chi_square": {"chi2": float(chi2_sector), "p_value": float(p_sector), "dof": int(dof_sector)},
         "H4_province_osb_exposure_severity_chi_square": {"chi2": float(chi2_osb), "p_value": float(p_osb), "dof": int(dof_osb)},
     }
@@ -217,31 +297,23 @@ def hypothesis_tests(clean: pd.DataFrame, istanbul: pd.DataFrame) -> dict:
 def run_ml(clean: pd.DataFrame, istanbul: pd.DataFrame) -> pd.DataFrame:
     REPORTS.mkdir(exist_ok=True)
     FIGURES.mkdir(exist_ok=True)
-    clean = clean.copy()
-    istanbul_weather = istanbul[
-        [
-            "source_file",
-            "Tarih",
-            "Firma İsmi",
-            "ilce",
-            "temperature_2m_mean",
-            "relative_humidity_2m_mean",
-            "windspeed_10m_max",
-            "precipitation_sum",
-            "extreme_heat",
-            "low_humidity",
-        ]
-    ].copy()
-    df_ml = clean.merge(
-        istanbul_weather,
-        on=["source_file", "Tarih", "Firma İsmi", "ilce"],
-        how="left",
-        suffixes=("", "_weather"),
-    )
-    for col in ["extreme_heat", "low_humidity"]:
+    df_ml = clean.copy()
+    for col in [
+        "temperature_2m_mean",
+        "relative_humidity_2m_mean",
+        "windspeed_10m_max",
+        "precipitation_sum",
+        "temp_lag1",
+        "humidity_lag1",
+    ]:
+        if col not in df_ml.columns:
+            df_ml[col] = np.nan
+    for col in ["extreme_heat", "low_humidity", "high_wind", "has_precipitation"]:
+        if col not in df_ml.columns:
+            df_ml[col] = False
         df_ml[col] = df_ml[col].fillna(False).astype(bool)
 
-    boolean_features = ["is_weekend", "is_holiday", "is_istanbul", "has_osb", "extreme_heat", "low_humidity"]
+    boolean_features = ["is_weekend", "is_holiday", "is_istanbul", "has_osb", "extreme_heat", "low_humidity", "high_wind", "has_precipitation"]
     for col in boolean_features:
         df_ml[col] = df_ml[col].fillna(False).astype(int)
 
@@ -264,8 +336,12 @@ def run_ml(clean: pd.DataFrame, istanbul: pd.DataFrame) -> pd.DataFrame:
         "relative_humidity_2m_mean",
         "windspeed_10m_max",
         "precipitation_sum",
+        "temp_lag1",
+        "humidity_lag1",
         "extreme_heat",
         "low_humidity",
+        "high_wind",
+        "has_precipitation",
         "sektor_std",
         "olay_turu",
     ]
@@ -289,6 +365,8 @@ def run_ml(clean: pd.DataFrame, istanbul: pd.DataFrame) -> pd.DataFrame:
         "relative_humidity_2m_mean",
         "windspeed_10m_max",
         "precipitation_sum",
+        "temp_lag1",
+        "humidity_lag1",
     ]
     categorical_features = ["sektor_std", "olay_turu"]
     preprocessor = ColumnTransformer(

@@ -74,6 +74,61 @@ SEKTOR_MAP = {
     "boya": "Boya",
 }
 
+OFFICIAL_PROVINCES = [
+    "Adana", "Adıyaman", "Afyonkarahisar", "Ağrı", "Amasya", "Ankara", "Antalya", "Artvin", "Aydın",
+    "Balıkesir", "Bilecik", "Bingöl", "Bitlis", "Bolu", "Burdur", "Bursa", "Çanakkale", "Çankırı",
+    "Çorum", "Denizli", "Diyarbakır", "Edirne", "Elazığ", "Erzincan", "Erzurum", "Eskişehir",
+    "Gaziantep", "Giresun", "Gümüşhane", "Hakkari", "Hatay", "Isparta", "Mersin", "İstanbul",
+    "İzmir", "Kars", "Kastamonu", "Kayseri", "Kırklareli", "Kırşehir", "Kocaeli", "Konya",
+    "Kütahya", "Malatya", "Manisa", "Kahramanmaraş", "Mardin", "Muğla", "Muş", "Nevşehir",
+    "Niğde", "Ordu", "Rize", "Sakarya", "Samsun", "Siirt", "Sinop", "Sivas", "Tekirdağ",
+    "Tokat", "Trabzon", "Tunceli", "Şanlıurfa", "Uşak", "Van", "Yozgat", "Zonguldak",
+    "Aksaray", "Bayburt", "Karaman", "Kırıkkale", "Batman", "Şırnak", "Bartın", "Ardahan",
+    "Iğdır", "Yalova", "Karabük", "Kilis", "Osmaniye", "Düzce",
+]
+
+DISTRICT_PROVINCE_HINTS = {
+    "çerkezköy": ("Tekirdağ", "Çerkezköy"),
+    "veliköy": ("Tekirdağ", "Çerkezköy"),
+    "velimeşe": ("Tekirdağ", "Ergene"),
+    "kestel": ("Bursa", "Kestel"),
+    "çalı": ("Bursa", "Nilüfer"),
+    "dudullu": ("İstanbul", "Ümraniye"),
+    "imes": ("İstanbul", "Ümraniye"),
+    "çatalca": ("İstanbul", "Çatalca"),
+    "küçükçekmece": ("İstanbul", "Küçükçekmece"),
+    "ümraniye": ("İstanbul", "Ümraniye"),
+    "esenyurt": ("İstanbul", "Esenyurt"),
+    "bayrampaşa": ("İstanbul", "Bayrampaşa"),
+    "arnavutköy": ("İstanbul", "Arnavutköy"),
+    "hacısabancı": ("Adana", "Sarıçam"),
+    "hacı sabancı": ("Adana", "Sarıçam"),
+    "sandıklı": ("Afyonkarahisar", "Sandıklı"),
+    "viranşehir": ("Şanlıurfa", "Viranşehir"),
+    "organazi": ("Batman", ""),
+    "arslanbey": ("Kocaeli", "Kartepe"),
+    "nazilli": ("Aydın", "Nazilli"),
+    "akhisar": ("Manisa", "Akhisar"),
+    "gülsan": ("Samsun", "Tekkeköy"),
+}
+
+
+def _ascii_key(text: object) -> str:
+    return (
+        str(text or "").replace("\n", " ").strip()
+        .lower()
+        .replace("ı", "i")
+        .replace("ğ", "g")
+        .replace("ü", "u")
+        .replace("ş", "s")
+        .replace("ö", "o")
+        .replace("ç", "c")
+    )
+
+
+PROVINCE_BY_ASCII = {_ascii_key(province): province for province in OFFICIAL_PROVINCES}
+PROVINCE_KEYS_BY_LENGTH = sorted(PROVINCE_BY_ASCII, key=len, reverse=True)
+
 
 def _clean_text(value: object) -> str:
     if pd.isna(value):
@@ -93,7 +148,11 @@ def repair_hyphenated_words(text: object) -> str:
         "Küçükçek- mece": "Küçükçekmece",
         "Kü-çükçekmece": "Küçükçekmece",
         "Kahraman- maraş": "Kahramanmaraş",
+        "Kahraman-maraş": "Kahramanmaraş",
         "Kahraman- kazan": "Kahramankazan",
+        "Afyonka-rahisar": "Afyonkarahisar",
+        "Kastamo-nu": "Kastamonu",
+        "İstanbu ": "İstanbul ",
         "Mene- men": "Menemen",
         "Kemalpa- şa": "Kemalpaşa",
         "Ga-ziemir": "Gaziemir",
@@ -173,8 +232,24 @@ def parse_location(value: object) -> tuple[str, str]:
     if not text or text == "-":
         return "", ""
     parts = [p.strip() for p in text.split("/", 1)]
-    il = parts[0]
-    ilce = parts[1] if len(parts) > 1 else ""
+    if len(parts) > 1:
+        il = parts[0]
+        ilce = parts[1]
+        return il, ilce
+
+    lowered = _ascii_key(text)
+    for key in PROVINCE_KEYS_BY_LENGTH:
+        if re.search(rf"(^|\W){re.escape(key)}($|\W)", lowered):
+            il = PROVINCE_BY_ASCII[key]
+            ilce = re.sub(rf"(^|\W){re.escape(key)}($|\W)", " ", lowered).strip()
+            return il, ilce
+
+    for hint, (province, district) in DISTRICT_PROVINCE_HINTS.items():
+        if hint in lowered:
+            return province, district
+
+    il = text
+    ilce = ""
     return il, ilce
 
 

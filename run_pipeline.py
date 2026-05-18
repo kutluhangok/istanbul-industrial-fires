@@ -24,7 +24,8 @@ def main() -> None:
     _, osb_city, osb_panel = build_osb_outputs(clean)
     clean = add_exposure_to_incidents(clean, osb_city)
     clean.to_excel("data/processed/kmo_incidents_clean.xlsx", index=False)
-    istanbul = build_enrichment()
+    clean, weather = build_enrichment(clean)
+    istanbul = clean[clean["is_istanbul"]].copy()
     build_figures(clean, istanbul)
     hypotheses = hypothesis_tests(clean, istanbul)
     model_comparison = run_ml(clean, istanbul)
@@ -38,6 +39,12 @@ def main() -> None:
         "osb_total_area_hectare": float(osb_city["osb_area_hectare"].sum()),
         "osb_total_parcels": int(osb_city["osb_parcels"].sum()),
         "city_year_panel_rows": int(len(osb_panel)),
+        "weather_matched_incidents": int(clean["temperature_2m_mean"].notna().sum()) if "temperature_2m_mean" in clean.columns else 0,
+        "weather_match_rate": float(clean["temperature_2m_mean"].notna().mean()) if "temperature_2m_mean" in clean.columns else 0.0,
+        "weather_provinces": int(weather["il"].nunique()),
+        "weather_rows": int(len(weather)),
+        "weather_source": ", ".join(sorted(str(x) for x in weather.get("weather_source", pd.Series(dtype=str)).dropna().unique()))
+        or "Open-Meteo Archive API / NASA POWER Daily API, province-level city-center coordinates",
         "figures": len(list(Path("figures").glob("*.png"))),
         "best_model": model_comparison.iloc[0].to_dict() if not model_comparison.empty else {},
         "hypothesis_results": hypotheses,

@@ -5,16 +5,38 @@
     "epsilon_squared": 0.009883466676782643
   },
   "H2_osb_exposure_mannwhitney": {
-    "U": 12171.5,
-    "p_value": 9.913055982834709e-31,
+    "U": 10508.5,
+    "p_value": 1.6958186779755807e-29,
     "osb_province_median": 10.0,
     "non_osb_province_median": 1.0
   },
   "H3_osb_exposure_correlations": {
-    "osb_parcels_spearman": 0.7947635916056632,
-    "osb_parcels_p_value": 7.821841143164724e-17,
-    "osb_area_spearman": 0.7493686668718624,
-    "osb_area_p_value": 3.6782180553461e-14
+    "osb_parcels_spearman": 0.8068081633360046,
+    "osb_parcels_p_value": 1.1733298233032158e-17,
+    "osb_area_spearman": 0.7638258632410394,
+    "osb_area_p_value": 6.0217020296155325e-15
+  },
+  "H3b_national_weather_incident_frequency": {
+    "temperature_2m_mean_spearman": 0.034355457080020135,
+    "temperature_2m_mean_p_value": 1.760811322685956e-57,
+    "relative_humidity_2m_mean_spearman": 0.008562202218886225,
+    "relative_humidity_2m_mean_p_value": 6.848125748046883e-05,
+    "windspeed_10m_max_spearman": 0.047522180801227075,
+    "windspeed_10m_max_p_value": 2.5141818581827024e-108,
+    "precipitation_sum_spearman": -0.010990677184561615,
+    "precipitation_sum_p_value": 3.2075475454058844e-07,
+    "extreme_heat_mean_incidents": 0.01982826340168486,
+    "not_extreme_heat_mean_incidents": 0.015046483484002655,
+    "extreme_heat_mannwhitney_U": 3323051018.5,
+    "extreme_heat_mannwhitney_p_value": 1.569674170234714e-09,
+    "low_humidity_mean_incidents": 0.010107070334133285,
+    "not_low_humidity_mean_incidents": 0.01650390625,
+    "low_humidity_mannwhitney_U": 2097598341.0,
+    "low_humidity_mannwhitney_p_value": 0.9999999956862363,
+    "has_precipitation_mean_incidents": 0.013808325513946942,
+    "not_has_precipitation_mean_incidents": 0.017436542419391722,
+    "has_precipitation_mannwhitney_U": 5726303535.5,
+    "has_precipitation_mannwhitney_p_value": 0.9999999065418189
   },
   "H4_sector_severity_chi_square": {
     "chi2": 90.32395452962544,
@@ -22,8 +44,8 @@
     "dof": 20
   },
   "H4_province_osb_exposure_severity_chi_square": {
-    "chi2": 4.508137026316152,
-    "p_value": 0.10497127757416845,
+    "chi2": 2.1482442155675225,
+    "p_value": 0.34159750950047985,
     "dof": 2
   }
 }
